@@ -1,4 +1,4 @@
-Database project is attached so the scripts may be looked at. I have also attached a .bak file so you can restore the database locally if you wish.
+Database project is attached so the scripts may be looked at. I have also attached a .bak and a .bacpac file so you can restore the database locally if you wish.
 
 1. How to Run Project
 Multiple start up, API project and Blazor (https) project will need to run in tandem, as the Blazor project speaks to the API.
@@ -15,6 +15,7 @@ NOTE: For the Bean of the Day feature, there is a job that runs a stored procedu
    3.2 There is a basic orders page when you can add beans and submit an order
    3.3 There is an admin page when you can do all the CRUD options through the UI so that you don't have to call the API manually.
    3.4 There is a Swagger UI endpoint that can be used by running the API project, you can call the API calls manually there if you wish.
+   3.5 On the admin page, you can also import the .json file so that all the beans are present.
 
 I'll keep this short, but enjoy :)
    
