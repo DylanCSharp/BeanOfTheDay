@@ -8,7 +8,7 @@ Multiple start up, API project and Blazor (https) project will need to run in ta
    2.2 I have also added an ASP.NET Core Web API to this project so that the Blazor Server project can talk to an API
    2.3 I have also added a class library so that code can be shared between both projects.
 
-NOTE: For the Bean of the Day feature, there is a job that runs a stored procedure, this job will refresh the Bean of the Day every morning at 00:01. The stored procedure ran is [BOTD].[RefreshBOTD]
+NOTE: For the Bean of the Day feature, there is a job that runs a stored procedure, this job will refresh the Bean of the Day every morning at 00:01. (THIS JOB WON'T RUN NOW BECAUSE ITS ON SQL SERVER AGENT). The stored procedure ran is [BOTD].[RefreshBOTD]
 
 3. Basics to expect
    3.1 There is a main page with all the beans loaded with all their images and information. You can view their details and a popup will display.
