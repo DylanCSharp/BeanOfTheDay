@@ -1,0 +1,160 @@
+﻿@page "/admin"
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Notifications
+
+@inject BeanService BeanService
+
+<SfToast @ref="_toastStandard" ShowCloseButton="true">
+    <ToastPosition X="right" Y="top"></ToastPosition>
+</SfToast>
+
+<CustomHeader HeaderText="Admin Functionality" NavigateBackTo="" ShowBackArrow="false"></CustomHeader>
+<SfTab>
+    <TabItems>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="Beans"></TabHeader>
+            </ChildContent>
+            <ContentTemplate>
+                <div class="pt-1">
+                    @if (_isLoading)
+                    {
+                        <p>Loading beans...</p>
+                    }
+                    else
+                    {
+                        <SfGrid TValue="Bean" DataSource="_beans" RowHeight="56" AllowTextWrap="false" ShowColumnChooser="true" Toolbar="@(new List<string> { "Search", "Add", "Edit", "Delete", "ColumnChooser" })">
+                            <GridEditSettings Mode="EditMode.Dialog" AllowAdding="true" AllowEditing="true" AllowDeleting="true" ShowDeleteConfirmDialog="true"></GridEditSettings>
+                            <GridEvents TValue="Bean" OnActionBegin="grdBeans_OnActionBegin"></GridEvents>
+                            <GridColumns>
+                                <GridColumn Field="@nameof(Bean.Id)" Width="150px" ValidationRules="@(new ValidationRules { Required = true })" Visible="true" ShowInColumnChooser="true" HeaderText="Id"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Index)" Width="75px" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Index"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Name)" Width="100px" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Name"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Description)" Width="100px" Visible="false" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Description"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.IsBOTD)" Width="75px" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="BOTD"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Colour)" Width="100px" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Color"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Country)" Width="100px" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Country"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Image)" Width="100px" Visible="false" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Image URL"></GridColumn>
+                                <GridColumn Field="@nameof(Bean.Cost)" Width="100px" ValidationRules="@(new ValidationRules { Required = true })" HeaderText="Cost (£)"></GridColumn>
+                            </GridColumns>
+                        </SfGrid>
+                    }
+                    
+                </div>
+            </ContentTemplate>
+        </TabItem>
+        <TabItem>
+            <ChildContent>
+                <TabHeader Text="Import"></TabHeader>
+            </ChildContent>
+            <ContentTemplate>
+                <div class="pt-2">
+                    <p>Only accepts .json files.</p>
+                    <SfUploader AutoUpload="false" AllowedExtensions=".json" SequentialUpload="false" ShowFileList="true" AllowMultiple="false" MaxFileSize="5000000">
+                        <UploaderEvents ValueChange="File_OnChange"></UploaderEvents>
+                    </SfUploader>
+                </div>
+            </ContentTemplate>
+        </TabItem>
+    </TabItems>
+</SfTab>
+
+
+@code {
+    #region References
+    private SfToast? _toastStandard;
+    #endregion
+    
+    #region Variables
+    private bool _isLoading = true;
+
+    private List<Bean> _beans = [];
+    
+    #endregion
+
+    #region Functions
+    
+    //On page load
+    protected override async Task OnInitializedAsync()
+    {
+        _beans = await BeanService.GetBeansAsync();
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    //When the saving or delete is triggered via the grid
+    private async Task grdBeans_OnActionBegin(ActionEventArgs<Bean> args)
+    {
+        switch (args.RequestType)
+        {
+            case Syncfusion.Blazor.Grids.Action.Save:
+            {
+                args.Cancel = true;
+                var response = await BeanService.MergeBeanAsync(args.Data);
+                if (response.IsSuccessStatusCode)
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Success", Content = $"{args.Data.Name} {(!string.IsNullOrWhiteSpace(args.Data.Id) ? "saved" : "updated")}.", CssClass = "e-toast-success", Width = "300px", Height = "100px", ShowCloseButton = true });
+                    _beans = await BeanService.GetBeansAsync();
+                }
+                else
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Error", Content = $"{args.Data.Name} could not be saved.", CssClass = "e-toast-danger", Width = "300px", Height = "100px", ShowCloseButton = true });
+                }
+                break;
+            }
+            case Syncfusion.Blazor.Grids.Action.Delete:
+            {
+                var response = await BeanService.DeleteBeanAsync(args.Data.Id!);
+                if (response.IsSuccessStatusCode)
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Success", Content = $"Bean deleted.", CssClass = "e-toast-success", Width = "300px", Height = "100px", ShowCloseButton = true });
+                    _beans = await BeanService.GetBeansAsync();
+                }
+                else
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Error", Content = $"{args.Data.Name} could not be deleted.", CssClass = "e-toast-danger", Width = "300px", Height = "100px", ShowCloseButton = true });
+                }
+                break;
+            }
+        }
+        StateHasChanged();
+    }
+
+    //Uploading the .json file to be saved to DB
+    private async Task File_OnChange(UploadChangeEventArgs args)
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var stream = args.Files.FirstOrDefault()?.File.OpenReadStream(5000000);
+            if (stream is not null)
+            {
+                MemoryStream ms = new();
+                await stream.CopyToAsync(ms);
+                ms.Position = 0;
+
+                var response = await BeanService.ImportBeansAsync(ms);
+                if (response.IsSuccessStatusCode)
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Success", Content = $"Beans imported.", CssClass = "e-toast-success", Width = "300px", Height = "100px", ShowCloseButton = true });
+                }
+                else
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Error", Content = $"Import failed.", Width = "300px", CssClass = "e-toast-danger", Height = "100px", ShowCloseButton = true });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _toastStandard!.ShowAsync(new ToastModel { Title = "Error", Content = $"{ex.Message}.", Width = "300px", CssClass = "e-toast-danger", Height = "100px", ShowCloseButton = true });
+        }
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+    
+    #endregion
+}

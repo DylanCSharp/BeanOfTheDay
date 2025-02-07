@@ -1,0 +1,20 @@
+﻿﻿header {
+    position: relative;
+    top: 0;
+    background-color: #AA3930;
+    border-radius: 10px;
+    height: 46px;
+    box-shadow: 1px 1px 1px 2px #AA3930;
+    opacity: 1;
+}
+
+.vertical-center {
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+label, i {
+    color: white;
+}

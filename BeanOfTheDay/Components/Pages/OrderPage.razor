@@ -1,0 +1,140 @@
+﻿@page "/order"
+
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Notifications
+@using Action = Syncfusion.Blazor.Grids.Action
+
+@inject BeanService BeanService
+
+<SfToast @ref="_toastStandard" ShowCloseButton="true">
+    <ToastPosition X="right" Y="top"></ToastPosition>
+</SfToast>
+
+@if (_isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <CustomHeader HeaderText="Order Our Beans" NavigateBackTo="" ShowBackArrow="false"></CustomHeader>
+    <div class="row">
+        <div class="col-lg-7 col-12">
+            <div class="form-row">
+                <SfTextBox @bind-Value="Order.Name" Placeholder="Client Name:" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+            </div>
+            <div class="form-row pt-2">
+                <SfTextBox Multiline="true" @bind-Value="Order.DeliveryAddress" Placeholder="Delivery Address:" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+            </div>
+            <div class="form-row pt-2">
+                <SfTextBox Multiline="true" @bind-Value="Order.DeliveryInstructions" Placeholder="Delivery Instructions:" FloatLabelType="FloatLabelType.Always"></SfTextBox>
+            </div>
+        </div>
+        <div class="col-lg-5 col-12">
+            <div class="">
+                <SfDropDownList TValue="string" TItem="Bean" DataSource="_allBeans" @bind-Value="_beanToAdd" Placeholder="Add Bean To Order:" AllowFiltering="true" FilterBarPlaceholder="Search..." FloatLabelType="FloatLabelType.Always">
+                    <DropDownListFieldSettings Value="Id" Text="Name"></DropDownListFieldSettings>
+                </SfDropDownList>
+                <div class=" pt-2">
+                    <SfButton Content="Add" @onclick="AddBeanToGrid"></SfButton>
+                </div>
+            </div>
+            <div class="pt-2">
+                <SfGrid @ref="_grdBeansOrdered" TValue="Bean" DataSource="Order.OrderedBeans" Toolbar="@(new List<string> { "Delete" })">
+                    <GridEvents TValue="Bean" OnActionComplete="OnActionComplete"></GridEvents>
+                    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true"></GridEditSettings>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Bean.Id)" IsPrimaryKey="true" Visible="false" AllowEditing="false"></GridColumn>
+                        <GridColumn Field="@nameof(Bean.Name)" AllowEditing="false"></GridColumn>
+                        <GridColumn Field="@nameof(Bean.Quantity)" EditType="EditType.NumericEdit"></GridColumn>
+                        <GridColumn Field="@nameof(Bean.Cost)" AllowEditing="false"></GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+    </div>
+    <div class="pt-4">
+            <button class="btn btn-sm btn-danger float-end" @onclick="SubmitOrder">Submit Order</button>
+    </div>
+}
+
+@code {
+    
+    #region References
+    
+    private SfToast? _toastStandard;
+    private SfGrid<Bean>? _grdBeansOrdered;
+    
+    #endregion
+    
+    #region Variables
+    private bool _isLoading = true;
+    
+    public Order Order = new();
+    private List<Bean> _allBeans = [];
+    
+    private string? _beanToAdd;
+    #endregion
+    
+    #region Functions
+
+    //On page load
+    protected override async Task OnInitializedAsync()
+    {
+        _allBeans = await BeanService.GetBeansAsync();
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    //Adding a bean from the dropdown to the grid
+    private async Task AddBeanToGrid()
+    {
+        var item = _allBeans.FirstOrDefault(x => x.Id == _beanToAdd);
+        if (item?.Id != null)
+        {
+            Order.OrderedBeans ??= [];
+            if (Order.OrderedBeans.Any(x => x.Id == _beanToAdd))
+            {
+                await _toastStandard!.ShowAsync(new ToastModel { Title = "Info", Content = $"Bean already added to order.", CssClass = "e-toast-info", Width = "300px", Height = "100px", ShowCloseButton = true });
+                return;
+            }
+            Order.OrderedBeans?.Add(item);
+            await _grdBeansOrdered?.Refresh()!;
+        }
+    }
+    
+    //Calling state has changed when the grid refreshes
+    private void OnActionComplete(ActionEventArgs<Bean> args)
+    {
+        if (args.RequestType == Action.Refresh)
+        {
+            StateHasChanged(); // Force UI update
+        }
+    }
+
+    //Submitting the order
+    private async Task SubmitOrder()
+    {
+        if (string.IsNullOrWhiteSpace(Order.Name))
+        {
+            await _toastStandard!.ShowAsync(new ToastModel { Title = "Warning", Content = $"Please enter a name.", CssClass = "e-toast-warning", Width = "300px", Height = "100px", ShowCloseButton = true });
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Order.DeliveryAddress))
+        {
+            await _toastStandard!.ShowAsync(new ToastModel { Title = "Warning", Content = $"Please enter a delivery address.", CssClass = "e-toast-warning", Width = "300px", Height = "100px", ShowCloseButton = true });
+            return;
+        }
+        Order = new Order
+        {
+            OrderedBeans = []
+        };
+        _beanToAdd = string.Empty;
+        await _grdBeansOrdered?.Refresh()!;
+        await _toastStandard!.ShowAsync(new ToastModel { Title = "Success", Content = $"Order submitted.", CssClass = "e-toast-success", Width = "300px", Height = "100px", ShowCloseButton = true });
+    }
+    
+    #endregion
+
+}

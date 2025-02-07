@@ -1,0 +1,6 @@
+@BeanOfTheDay.API_HostAddress = http://localhost:5187
+
+GET {{BeanOfTheDay.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

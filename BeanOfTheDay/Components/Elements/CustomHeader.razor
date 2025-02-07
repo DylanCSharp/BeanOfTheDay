@@ -1,0 +1,42 @@
+﻿@inject NavigationManager NavManager
+
+<div class="pb-3">
+    <header>
+        <div class="vertical-center">
+            @if (ShowBackArrow)
+            {
+                <span class="material-symbols-outlined" style="font-size: 12px">
+                    keyboard_double_arrow_left
+                </span>
+                <label style="font-size: 0.95rem;">@HeaderText</label>
+            }
+            else
+            {
+                <label style="font-size: 0.95rem; font-weight: 600; letter-spacing: 1px; display: inline-flex;">
+                    <span class="material-symbols-outlined ms-1" style="cursor:pointer; color: white;font-size: 2rem; padding: 0.3rem; margin-top: 2px">@Icon</span>
+                    <label class="ms-1 me-1" style="font-size: 1rem; margin-top: 12px; letter-spacing: 2px"> @HeaderText</label>
+                </label>
+            }
+        </div>
+    </header>
+</div>
+
+@code {
+
+    [Parameter]
+    public string? HeaderText { get; set; }
+
+    [Parameter]
+    public string? NavigateBackTo { get; set; }
+
+    [Parameter]
+    public bool ShowBackArrow { get; set; }
+
+    [Parameter]
+    public string? Icon { get; set; }
+
+    private void NavigateBack()
+    {
+        NavManager.NavigateTo($"{NavigateBackTo}");
+    }
+}

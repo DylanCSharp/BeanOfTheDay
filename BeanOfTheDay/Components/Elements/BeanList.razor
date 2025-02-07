@@ -1,0 +1,195 @@
+﻿@using BeanOfTheDay.Library.Models
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Popups
+
+@inject BeanService BeanService
+
+@if (_isLoading)
+{
+    <p>Loading your beans...</p>
+}
+else
+{
+    <div class="pb-3">
+        <div class="row">
+            <div class="col-12">
+                <input style="width: 300px; float: inline-end; border-radius: 10px" @bind="_searchQuery" class="form-control form-control-sm" @oninput="OnInput" placeholder="Search items..." />
+            </div>
+        </div>
+        <div class="row pt-2">
+            <Virtualize Items="_filteredBeans" Context="item">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-6 col-xl-6 pt-1 pb-1 px-1 px-md-2 px-lg-2">
+                    <SfCard ID="ProductCard">
+                        <CardContent>
+                            <div class="row pt-2">
+                                <div class="col-5">
+                                    <img src="@item.Image" style="max-height: 140px; border-radius: 30px; box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1);" class="img-fluid pt-2" alt="@item.Name" />
+                                </div>
+                                <div class="col-7 text-end">
+                                    <div class="row">
+                                        <h6 class="fw-bold" style="letter-spacing: 1px">
+                                            @item.Name!.ToUpper()   
+                                            @if (item.IsBOTD)
+                                            {
+                                                 <span style="color: #AA3930;" class="fw-bold"> - BEAN OF THE DAY</span>
+                                            }
+                                        </h6>
+                                    </div>
+                                    <div class="row" style="height: 150px; overflow-y: auto">
+                                        <p>@((MarkupString)item.Description!)</p>
+                                    </div>
+                                    <div class="row pt-2">
+
+                                        <p><a style="cursor: pointer; color: #AA3930; text-decoration: underline" @onclick="() => ShowDetails(item)">View Details</a></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pt-1">
+                                <div class="col-12 text-end">
+                                    <div class="btn btn-sm btn-danger" style="background-color: #AA3930">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-cart4" viewBox="0 0 20 20">
+                                            <path d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5M3.14 5l.5 2H5V5zM6 5v2h2V5zm3 0v2h2V5zm3 0v2h1.36l.5-2zm1.11 3H12v2h.61zM11 8H9v2h2zM8 8H6v2h2zM5 8H3.89l.5 2H5zm0 5a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0m9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
+                                        </svg> &nbsp; @($"{item.Cost:0.00}")
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </SfCard>
+                </div>
+            </Virtualize>
+        </div>
+    </div>
+}
+
+<SfDialog @bind-Visible="_showDetail" Width="500px" Height="650px" IsModal="true" ShowCloseIcon="true">
+    <DialogEvents Closed="diaDetailClosed"></DialogEvents>
+    <DialogTemplates>
+        <Header>Bean Detail</Header>
+        <Content>
+            <div class="row">
+                <div class="col-4">Name:</div>
+                <div class="col-8">@(_selectedBean.Name!)</div>
+            </div>
+            <div class="row pt-2">
+                <div class="col-4">Description:</div>
+                <div class="col-8">@((MarkupString)_selectedBean.Description!)</div>
+            </div>
+            <div class="row pt-2">
+                <div class="col-4">Color:</div>
+                <div class="col-8">@(_selectedBean.Colour?.ToUpper()!)</div>
+            </div>
+            <div class="row pt-2">
+                <div class="col-4">Country:</div>
+                <div class="col-8">@(_selectedBean.Country!)</div>
+            </div>
+            <div class="row pt-2">
+                <div class="col-4">Cost:</div>
+                <div class="col-8">@($"{_selectedBean.Cost:0.00}")</div>
+            </div>
+            @if (_selectedBean.IsBOTD)
+            {
+                <div class="row pt-2">
+                    <div class="col-4">Bean of the Day:</div>
+                    <div class="col-8">
+                        <span class="badge alert-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                                <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            }
+            <div class="row pt-4">
+                <div class="col-4">&nbsp;</div>
+                <div class="col-8">
+                    <img src="@_selectedBean.Image" style="max-height: 200px; border-radius: 30px; box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.1);" class="img-fluid pt-2" alt="@_selectedBean.Name" loading="lazy" />
+                </div>
+            </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+<style>
+    .vertical-center {
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    }
+
+    label, i {
+    color: white;
+    }
+
+    #ProductCard {
+    min-height: 300px !important;
+    max-height: 300px;
+    background-color: white !important;
+    box-shadow: #AA3930 1px 1px 2px;
+    }
+</style>
+
+@code {
+    
+    #region Variables
+    private bool _isLoading = true;
+    private bool _showDetail;
+
+    private string _searchQuery;
+
+    private List<Bean>? _beans;
+    private List<Bean>? _filteredBeans;
+
+    private Bean _selectedBean = new();
+
+    #endregion
+    
+    #region Functions
+    
+    //On page load
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(100);
+        _beans = await BeanService.GetBeansAsync();
+        _filteredBeans = _beans.Select(x => (Bean)x.Clone()).ToList();
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    //When expanding detail
+    private void ShowDetails(Bean beanSelected)
+    {
+        _showDetail = true;
+        _selectedBean = beanSelected;
+        StateHasChanged();
+    }
+
+    //When closing the dialog
+    private void diaDetailClosed()
+    {
+        _showDetail = false;
+        _selectedBean = new();
+        StateHasChanged();
+    }
+
+    //When filtering
+    private async void OnInput(ChangeEventArgs e)
+    {
+        _searchQuery = e.Value?.ToString()!;
+        if (_searchQuery != null)
+        {
+            _filteredBeans = _beans?.Where(i =>
+                i.Name!.Contains(_searchQuery!, StringComparison.OrdinalIgnoreCase) ||
+                i.Description!.Contains(_searchQuery!, StringComparison.OrdinalIgnoreCase) ||
+                i.Cost.ToString()!.Contains(_searchQuery!, StringComparison.OrdinalIgnoreCase) ||
+                i.Colour!.Contains(_searchQuery!, StringComparison.OrdinalIgnoreCase) ||
+                i.Country!.Contains(_searchQuery!, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+        StateHasChanged();
+    }
+
+    #endregion
+}
