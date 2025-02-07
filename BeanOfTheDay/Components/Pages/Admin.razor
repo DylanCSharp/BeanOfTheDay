@@ -40,7 +40,7 @@
                             </GridColumns>
                         </SfGrid>
                     }
-                    
+
                 </div>
             </ContentTemplate>
         </TabItem>
@@ -65,16 +65,16 @@
     #region References
     private SfToast? _toastStandard;
     #endregion
-    
+
     #region Variables
     private bool _isLoading = true;
 
     private List<Bean> _beans = [];
-    
+
     #endregion
 
     #region Functions
-    
+
     //On page load
     protected override async Task OnInitializedAsync()
     {
@@ -90,7 +90,13 @@
         {
             case Syncfusion.Blazor.Grids.Action.Save:
             {
-                args.Cancel = true;
+                    args.Cancel = true;
+                if (args.Data.IsBOTD && _beans.Where(x => x.Id != args.Data.Id).Any(x => x.IsBOTD))
+                {
+                    await _toastStandard!.ShowAsync(new ToastModel { Title = "Warning", Content = $"There is already a bean of the day selected.", CssClass = "e-toast-warning", Width = "300px", Height = "100px", ShowCloseButton = true });
+                    return;
+                }
+                    
                 var response = await BeanService.MergeBeanAsync(args.Data);
                 if (response.IsSuccessStatusCode)
                 {
